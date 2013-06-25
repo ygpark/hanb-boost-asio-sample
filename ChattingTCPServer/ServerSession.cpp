@@ -1,21 +1,31 @@
 #include "ServerSession.h"
 #include "ChattingServer.h"
 
+/**
+ * Session - Client당 하나씩 생성되며 실제로 데이터 송, 수신이 이루어 진다.
+ *           데이터는 보내기 전에 별도의 큐에 복사한 뒤 보낸다.
+ * 
+ *
+ * 추정하는 버그:
+ *	1.  handle_write()함수에 PostSend대신 boost::asio::async_write 가 사용되어야 함
+ *	2. 1이 동작하려면 PostSend(), handle_write()함수에 mutex걸려야 함.
+ **/
+
 
 /**
- *
+ * 생성자 - 공유 변수 초기화
  **/
 Session::Session(int nSessionID, boost::asio::io_service& io_service, ChatServer* pServer)
 		: m_Socket(io_service)
 		, m_nSessionID( nSessionID )
 		, m_pServer( pServer )
 {
-	m_bCompletedWrite = true;
+	m_bCompletedWrite = true;	//데이터를 보내고 있지 않다.
 }
 
 
 /**
- *
+ * 소멸자 - 데이터 버퍼의 메모리를 해제하고 큐를 비운다.
  **/
 Session::~Session()
 {
@@ -27,7 +37,7 @@ Session::~Session()
 }
 
 /**
- *
+ * Init - 
  **/
 void Session::Init()
 {
@@ -35,7 +45,7 @@ void Session::Init()
 }
 
 /**
- * 비동시 수신을 시작한다.
+ * PostReceive - 비동시 수신을 시작한다.
  **/
 void Session::PostReceive()
 {
@@ -52,10 +62,12 @@ void Session::PostReceive()
 /**
  * PostSend - 비동시 송신을 시작한다.
  * 
- * 매개변수의 데이터를 복사해서 deque에 집어넣는다.
- * 그리고나서 비동기 전송을 수행한다. 
- * 만약 m_bCompleteWrite가 false면 아직 handler_write함수가 동작중이므로
- * 비동기 쓰기 작업을 수행하지 않는다.
+ * 보낼 데이터를 복사한 뒤 그 복사본으로 전송한다.
+ * 만일 전송이 완료되지 않았으면 큐에 데이터를 추가하고 즉시 리턴한다.
+ * 
+ * 여기서 엔디언Endian은 고려하지 않아도 된다.htonl()같은 함수를 호출하지 않는다는 말이다.
+ * 문자열은 1byte로 쪼개져서 가기 때문이다.
+ *
  **/
 void Session::PostSend( const int nSize, char* pData )
 {
@@ -68,6 +80,7 @@ void Session::PostSend( const int nSize, char* pData )
 
 	if( m_bCompletedWrite == false )
 	{
+		//FIXME: mutex.unlock 필요
 		return;
 	}
 	//FIXME: mutex.unlock 필요
@@ -82,9 +95,10 @@ void Session::PostSend( const int nSize, char* pData )
 /**
  * handle_write - 비동기 전송 핸들러
  *
- * 이 함수가 호출되면 boost::asio::async_write 가 데이터를 모두 전송했다는 뜻이다.
+ * boost::asio::async_write함수가 데이터를 모두 보냈거나 에러가 발생하면 자동으로 호출된다.
  * 송신을 마쳤으니 송신용 메모리를 해제하고 보낸 데이터를 큐에서 뺀다.
- * 큐가 비어있지 않으면 
+ *
+ * 큐에 보낼 데이터가 있으면 보내기를 계속하고 
  *
  * 의문점: 왜 에러처리를 안했는가? 모두 보냈다는 보증이 있는가?
  *
@@ -95,6 +109,7 @@ void Session::PostSend( const int nSize, char* pData )
 void Session::handle_write(const boost::system::error_code& error, size_t bytes_transferred)
 {
 	//FIXME: mutex.lock 필요
+	
 	delete[] m_SendDataQueue.front();
 	m_SendDataQueue.pop_front();
 
@@ -106,7 +121,12 @@ void Session::handle_write(const boost::system::error_code& error, size_t bytes_
 		
 		PACKET_HEADER* pHeader = (PACKET_HEADER*)pData;
 
-		PostSend( pHeader->nSize, pData );
+		boost::asio::async_write( m_Socket, boost::asio::buffer( pData, pHeader->nSize ),
+								 boost::bind( &Session::handle_write, this,
+									boost::asio::placeholders::error,
+									boost::asio::placeholders::bytes_transferred )
+								);
+		//PostSend( pHeader->nSize, pData );
 	}
 	else
 	{

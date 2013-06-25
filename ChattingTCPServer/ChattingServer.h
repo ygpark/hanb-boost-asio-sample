@@ -11,15 +11,22 @@
 #include "Protocol.h"
 
 /*
- * ChatServer가 하는 일.
- * 1. Init(MAX): Session Pool을 MAX_SESSION_COUNT만큼 생성한다.
- * 1. Start(): 비동기 accept를 시작한다.
- * 2. 
+ * ChatServer - 채팅 서버
+ * 
+ * <흐름도>
  *
+ *	A|	ChatServer::Init()						//+ SessionPool을 100개 생성
+ *	 |		--> ChatServer::Start()				//+ Accept시작
+ *	 |			--> ChatServer::PostAccept()	//- Accept시작
+ *	 
+ *	B|	...대기...
  *
- *
- *
- *
+ *	C|	Client접속
+ *	 |		--> -ChatServer::handle_accept()
+ *	 |			--> Session::Init()
+ *	 |			    Session::PostReceive()
+ *	 |			    ChatServer::PostAccept()
+ *				    B로 이동
  * */
 
 class ChatServer
@@ -91,7 +98,7 @@ public:
 				PKT_REQ_IN* pPacket = (PKT_REQ_IN*)pData;
 				m_SessionPool[ nSessionID ]->SetName( pPacket->szName );
 
-				std::cout << "클라이언트 로그인 성공 Name: " << m_SessionPool[ nSessionID ]->GetName() << std::endl; 
+				std::cout << "User Name: " << m_SessionPool[ nSessionID ]->GetName() << std::endl; 
 
 				PKT_RES_IN SendPkt;
 				SendPkt.Init();

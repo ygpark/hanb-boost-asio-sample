@@ -10,7 +10,11 @@ const int MAX_MESSAGE_LEN = 129;
 
 
 
-
+/**
+ * PACKET_HEADER - 패킷 헤더. 여기서는 앞 2바이트.
+ * @ nID	명령의 종류
+ * @ nSize	현재 구조체의 전체 사이즈.
+ **/
 struct PACKET_HEADER
 {
 	short nID;
