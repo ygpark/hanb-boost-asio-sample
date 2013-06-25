@@ -1,4 +1,4 @@
-#include <SDKDDKVer.h>
+//#include <SDKDDKVer.h>
 #include <deque>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
@@ -16,12 +16,11 @@ public:
 	  m_Socket(io_service)
 	{
 		m_bIsLogin = false;
-		InitializeCriticalSectionAndSpinCount(&m_lock, 4000);
 	}
 
 	~ChatClient()
 	{
-		EnterCriticalSection(&m_lock);
+		m_lock.lock();
 
 		while( m_SendDataQueue.empty() == false )
 		{
@@ -29,9 +28,7 @@ public:
 			m_SendDataQueue.pop_front();
 		}
 
-		LeaveCriticalSection(&m_lock);
-
-		DeleteCriticalSection(&m_lock); 
+		m_lock.unlock();
 	}
 	
 	bool IsConnecting() { return m_Socket.is_open(); }
@@ -62,7 +59,7 @@ public:
 		char* pSendData = new char[nSize];
 		memcpy( pSendData, pData, nSize);
 
-		EnterCriticalSection(&m_lock);
+		m_lock.lock();
 
 		m_SendDataQueue.push_back( pSendData );
 
@@ -75,7 +72,7 @@ public:
 									);
 		}
 
-		LeaveCriticalSection(&m_lock);
+		m_lock.unlock();
 	}
 
 	
@@ -113,7 +110,7 @@ private:
 
 	void handle_write(const boost::system::error_code& error, size_t bytes_transferred)
 	{
-		EnterCriticalSection(&m_lock);
+		m_lock.lock();
 
 		delete[] m_SendDataQueue.front();
 		m_SendDataQueue.pop_front();
@@ -125,7 +122,7 @@ private:
 			pData = m_SendDataQueue.front();
 		}
 		
-		LeaveCriticalSection(&m_lock);
+		m_lock.unlock();
 
 		
 		if( pData != nullptr )
@@ -229,7 +226,7 @@ private:
 	int m_nPacketBufferMark;
 	char m_PacketBuffer[MAX_RECEIVE_BUFFER_LEN*2];
 
-	CRITICAL_SECTION m_lock;
+	boost::mutex m_lock;
 	std::deque< char* > m_SendDataQueue;
 
 	bool m_bIsLogin;
@@ -254,14 +251,16 @@ int main()
     
 	while( std::cin.getline( szInputMessage, MAX_MESSAGE_LEN) )
     {
-		if( strnlen_s( szInputMessage, MAX_MESSAGE_LEN ) == 0 )
+		//if( strnlen_s( szInputMessage, MAX_MESSAGE_LEN ) == 0 )
+		if( strnlen( szInputMessage, MAX_MESSAGE_LEN ) == 0 )
 		{
 			break;
 		}
 
 		if( Client.IsConnecting() == false )
 		{
-			std::cout << "서버와 연결되지 않았습니다" << std::endl;
+			//std::cout << "서버와 연결되지 않았습니다" << std::endl;
+			std::cout << "no server" << std::endl;
 			continue;
 		}
 
@@ -269,7 +268,8 @@ int main()
 		{
 			PKT_REQ_IN SendPkt;
 			SendPkt.Init();
-			strncpy_s( SendPkt.szName, MAX_NAME_LEN, szInputMessage, MAX_NAME_LEN-1 );
+			//strncpy_s( SendPkt.szName, MAX_NAME_LEN, szInputMessage, MAX_NAME_LEN-1 );
+			strncpy( SendPkt.szName, szInputMessage, MAX_NAME_LEN-1 );
 
 			Client.PostSend( SendPkt.nSize, (char*)&SendPkt );
 		}
@@ -277,7 +277,8 @@ int main()
 		{
 			PKT_REQ_CHAT SendPkt;
 			SendPkt.Init();
-			strncpy_s( SendPkt.szMessage, MAX_MESSAGE_LEN, szInputMessage, MAX_MESSAGE_LEN-1 );
+			//strncpy_s( SendPkt.szMessage, MAX_MESSAGE_LEN, szInputMessage, MAX_MESSAGE_LEN-1 );
+			strncpy( SendPkt.szMessage, szInputMessage, MAX_MESSAGE_LEN-1 );
 
 			Client.PostSend( SendPkt.nSize, (char*)&SendPkt );
 		}
@@ -289,7 +290,8 @@ int main()
 	
     thread.join();
   
-	std::cout << "클라이언트를 종료해 주세요" << std::endl;
+	//std::cout << "클라이언트를 종료해 주세요" << std::endl;
+	std::cout << "exit the client" << std::endl;
 
 	return 0;
 }

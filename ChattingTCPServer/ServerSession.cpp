@@ -2,6 +2,9 @@
 #include "ChattingServer.h"
 
 
+/**
+ *
+ **/
 Session::Session(int nSessionID, boost::asio::io_service& io_service, ChatServer* pServer)
 		: m_Socket(io_service)
 		, m_nSessionID( nSessionID )
@@ -10,6 +13,10 @@ Session::Session(int nSessionID, boost::asio::io_service& io_service, ChatServer
 	m_bCompletedWrite = true;
 }
 
+
+/**
+ *
+ **/
 Session::~Session()
 {
 	while( m_SendDataQueue.empty() == false )
@@ -19,11 +26,17 @@ Session::~Session()
 	}
 }
 
+/**
+ *
+ **/
 void Session::Init()
 {
 	m_nPacketBufferMark = 0;
 }
 
+/**
+ * 비동시 수신을 시작한다.
+ **/
 void Session::PostReceive()
 {
 	m_Socket.async_read_some
@@ -36,17 +49,28 @@ void Session::PostReceive()
 		);
 }
 
+/**
+ * PostSend - 비동시 송신을 시작한다.
+ * 
+ * 매개변수의 데이터를 복사해서 deque에 집어넣는다.
+ * 그리고나서 비동기 전송을 수행한다. 
+ * 만약 m_bCompleteWrite가 false면 아직 handler_write함수가 동작중이므로
+ * 비동기 쓰기 작업을 수행하지 않는다.
+ **/
 void Session::PostSend( const int nSize, char* pData )
 {
+
 	char* pSendData = new char[nSize];
 	memcpy( pSendData, pData, nSize);
 
+	//FIXME: mutex.lock 필요
 	m_SendDataQueue.push_back( pSendData );
 
 	if( m_bCompletedWrite == false )
 	{
 		return;
 	}
+	//FIXME: mutex.unlock 필요
 
 	boost::asio::async_write( m_Socket, boost::asio::buffer( pSendData, nSize ),
 							 boost::bind( &Session::handle_write, this,
@@ -55,8 +79,22 @@ void Session::PostSend( const int nSize, char* pData )
 							);
 }
 
+/**
+ * handle_write - 비동기 전송 핸들러
+ *
+ * 이 함수가 호출되면 boost::asio::async_write 가 데이터를 모두 전송했다는 뜻이다.
+ * 송신을 마쳤으니 송신용 메모리를 해제하고 보낸 데이터를 큐에서 뺀다.
+ * 큐가 비어있지 않으면 
+ *
+ * 의문점: 왜 에러처리를 안했는가? 모두 보냈다는 보증이 있는가?
+ *
+ * @error				에러 코드
+ * @bytes_transferred	전송한 바이트 수
+ *
+ **/
 void Session::handle_write(const boost::system::error_code& error, size_t bytes_transferred)
 {
+	//FIXME: mutex.lock 필요
 	delete[] m_SendDataQueue.front();
 	m_SendDataQueue.pop_front();
 
@@ -74,7 +112,9 @@ void Session::handle_write(const boost::system::error_code& error, size_t bytes_
 	{
 		m_bCompletedWrite = true;
 	}
+	//FIXME: mutex.unlock 필요
 }
+
 
 void Session::handle_receive( const boost::system::error_code& error, size_t bytes_transferred )
 {
@@ -82,7 +122,7 @@ void Session::handle_receive( const boost::system::error_code& error, size_t byt
 	{
 		if( error == boost::asio::error::eof )
 		{
-			std::cout << "Ŭ���̾�Ʈ�� ������ ���������ϴ�" << std::endl;
+			std::cout << "client is disconnected." << std::endl;
 		}
 		else 
 		{
