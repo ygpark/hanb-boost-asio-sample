@@ -5,6 +5,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
+#include <boost/thread.hpp>
 
 #include "Protocol.h"
 
@@ -54,4 +55,5 @@ private:
 	std::string m_Name;
 
 	ChatServer* m_pServer;
+	boost::mutex m_lock;
 };

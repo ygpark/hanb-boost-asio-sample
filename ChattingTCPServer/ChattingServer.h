@@ -92,6 +92,10 @@ public:
 
 		switch( pheader->nID )
 		{
+
+		/**
+		 * REQ_IN 요청을 보낸 Client에게만 리턴을 준다.
+		 **/
 		case REQ_IN:
 			{
 				PKT_REQ_IN* pPacket = (PKT_REQ_IN*)pData;
@@ -106,6 +110,9 @@ public:
 				m_SessionPool[ nSessionID ]->PostSend( SendPkt.nSize, (char*)&SendPkt ); 
 			}
 			break;
+		/**
+		 * REQ_CHAT 요청을 보낸 Client를 포함한 모든 Client에게 REQ_NOTICE_CHAT 패킷을 보낸다.
+		 **/
 		case REQ_CHAT:
 			{
 				PKT_REQ_CHAT* pPacket = (PKT_REQ_CHAT*)pData;
@@ -152,11 +159,11 @@ private:
 
 		m_SessionTickets.pop_front();
 		m_acceptor.async_accept( m_SessionPool[nSessionID]->Socket(),
-								 boost::bind(&ChatServer::handle_accept, 
-												this, 
-												m_SessionPool[nSessionID],
-												boost::asio::placeholders::error)
-								);
+					boost::bind(&ChatServer::handle_accept, 
+					this, 
+					m_SessionPool[nSessionID],
+					boost::asio::placeholders::error)
+					);
 
 		return true;
 	}

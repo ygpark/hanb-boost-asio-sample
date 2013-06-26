@@ -1,7 +1,6 @@
-#include "ServerSession.h"
-#include "ChattingServer.h"
-
 /**
+ * ServerSession.cpp
+ *
  * Session - Client당 하나씩 생성되며 실제로 데이터 송, 수신이 이루어 진다.
  *           데이터는 보내기 전에 별도의 큐에 복사한 뒤 보낸다.
  * 
@@ -10,7 +9,19 @@
  *	1.  handle_write()함수에 PostSend대신 boost::asio::async_write 가 사용되어야 함
  *	2. 1이 동작하려면 PostSend(), handle_write()함수에 mutex걸려야 함.
  **/
+#include "ServerSession.h"
+#include "ChattingServer.h"
 
+
+
+#define USE_DEBUG
+
+#ifdef USE_DEBUG
+    #define MODULE_NAME "[debug] "
+    #define debug(fmt, arg...)    do{printf(MODULE_NAME  "%s:%d: " fmt, __func__, __LINE__ , ##arg); }while(0)
+#else
+    #define debug            do{}while(0)
+#endif
 
 /**
  * 생성자 - 공유 변수 초기화
@@ -71,19 +82,19 @@ void Session::PostReceive()
  **/
 void Session::PostSend( const int nSize, char* pData )
 {
-
 	char* pSendData = new char[nSize];
 	memcpy( pSendData, pData, nSize);
 
-	//FIXME: mutex.lock 필요
+	m_lock.lock();
 	m_SendDataQueue.push_back( pSendData );
 
 	if( m_bCompletedWrite == false )
 	{
-		//FIXME: mutex.unlock 필요
+		m_lock.unlock();
 		return;
 	}
-	//FIXME: mutex.unlock 필요
+	m_bCompletedWrite = false;
+	m_lock.unlock();
 
 	boost::asio::async_write( m_Socket, boost::asio::buffer( pSendData, nSize ),
 							 boost::bind( &Session::handle_write, this,
@@ -108,8 +119,8 @@ void Session::PostSend( const int nSize, char* pData )
  **/
 void Session::handle_write(const boost::system::error_code& error, size_t bytes_transferred)
 {
-	//FIXME: mutex.lock 필요
-	
+	m_lock.lock();
+
 	delete[] m_SendDataQueue.front();
 	m_SendDataQueue.pop_front();
 
@@ -126,13 +137,13 @@ void Session::handle_write(const boost::system::error_code& error, size_t bytes_
 									boost::asio::placeholders::error,
 									boost::asio::placeholders::bytes_transferred )
 								);
-		//PostSend( pHeader->nSize, pData );
 	}
 	else
 	{
 		m_bCompletedWrite = true;
 	}
-	//FIXME: mutex.unlock 필요
+
+	m_lock.unlock();
 }
 
 
