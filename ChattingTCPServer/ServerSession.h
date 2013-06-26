@@ -48,8 +48,6 @@ private:
 	int m_nPacketBufferMark;
 	char m_PacketBuffer[MAX_RECEIVE_BUFFER_LEN*2];
 
-	bool m_bCompletedWrite;
-
 	std::deque< char* > m_SendDataQueue;
 
 	std::string m_Name;

@@ -31,7 +31,6 @@ Session::Session(int nSessionID, boost::asio::io_service& io_service, ChatServer
 		, m_nSessionID( nSessionID )
 		, m_pServer( pServer )
 {
-	m_bCompletedWrite = true;	//데이터를 보내고 있지 않다.
 }
 
 
@@ -88,19 +87,15 @@ void Session::PostSend( const int nSize, char* pData )
 	m_lock.lock();
 	m_SendDataQueue.push_back( pSendData );
 
-	if( m_bCompletedWrite == false )
-	{
-		m_lock.unlock();
-		return;
+	if (m_SendDataQueue.size() < 2) {
+		boost::asio::async_write( m_Socket, 
+					  boost::asio::buffer( pSendData, nSize ),
+					  boost::bind( &Session::handle_write, this,
+						boost::asio::placeholders::error,
+						boost::asio::placeholders::bytes_transferred )
+					  );
 	}
-	m_bCompletedWrite = false;
 	m_lock.unlock();
-
-	boost::asio::async_write( m_Socket, boost::asio::buffer( pSendData, nSize ),
-							 boost::bind( &Session::handle_write, this,
-								boost::asio::placeholders::error,
-								boost::asio::placeholders::bytes_transferred )
-							);
 }
 
 /**
@@ -123,24 +118,20 @@ void Session::handle_write(const boost::system::error_code& error, size_t bytes_
 
 	delete[] m_SendDataQueue.front();
 	m_SendDataQueue.pop_front();
-
+	debug("queue size: %d\n", m_SendDataQueue.size());
+	
 	if( m_SendDataQueue.empty() == false )
 	{
-		m_bCompletedWrite = false;
-
 		char* pData = m_SendDataQueue.front();
 		
 		PACKET_HEADER* pHeader = (PACKET_HEADER*)pData;
 
-		boost::asio::async_write( m_Socket, boost::asio::buffer( pData, pHeader->nSize ),
-								 boost::bind( &Session::handle_write, this,
-									boost::asio::placeholders::error,
-									boost::asio::placeholders::bytes_transferred )
-								);
-	}
-	else
-	{
-		m_bCompletedWrite = true;
+		boost::asio::async_write( m_Socket, 
+					  boost::asio::buffer( pData, pHeader->nSize ),
+					  boost::bind( &Session::handle_write, this,
+						boost::asio::placeholders::error,
+						boost::asio::placeholders::bytes_transferred )
+					);
 	}
 
 	m_lock.unlock();
