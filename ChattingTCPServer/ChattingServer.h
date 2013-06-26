@@ -11,21 +11,21 @@
 #include "Protocol.h"
 
 /*
- * ChatServer - Ã¤ÆÃ ¼­¹ö
- * <Èå¸§µµ>
+ * ChatServer - ì±„íŒ… ì„œë²„
+ * <íë¦„ë„>
  *
- *	A|	ChatServer::Init()				//+ SessionPoolÀ» 100°³ »ı¼º
- *	 |		--> ChatServer::Start()			//+ Accept½ÃÀÛ
- *	 |			--> ChatServer::PostAccept()	//- Accept½ÃÀÛ
+ *	A|	ChatServer::Init()				//+ SessionPoolì„ 100ê°œ ìƒì„±
+ *	 |		--> ChatServer::Start()			//+ Acceptì‹œì‘
+ *	 |			--> ChatServer::PostAccept()	//- Acceptì‹œì‘
  *	 
- *	B|	...´ë±â...
+ *	B|	...ëŒ€ê¸°...
  *
- *	C|	ClientÁ¢¼Ó
+ *	C|	Clientì ‘ì†
  *	 |		--> -ChatServer::handle_accept()
  *	 |			--> Session::Init()
  *	 |			    Session::PostReceive()
  *	 |			    ChatServer::PostAccept()
- *				    B·Î ÀÌµ¿
+ *				    Bë¡œ ì´ë™
  * */
 
 class ChatServer
@@ -68,8 +68,8 @@ public:
 	}
 
 	/**
-	 * SessionÀ» Poll¿¡ ¹İ³³ÇÑ´Ù.
-	 * ¸¸ÀÏ Session PoolÀÌ °¡µæÂ÷¼­ Accept°¡ ÁßÁöµÈ »óÅÂ¶ó¸é ´Ù½Ã AcceptÇÑ´Ù.
+	 * Sessionì„ Pollì— ë°˜ë‚©í•œë‹¤.
+	 * ë§Œì¼ Session Poolì´ ê°€ë“ì°¨ì„œ Acceptê°€ ì¤‘ì§€ëœ ìƒíƒœë¼ë©´ ë‹¤ì‹œ Acceptí•œë‹¤.
 	 **/
 	void CloseSession( const int nSessionID )
 	{
@@ -84,7 +84,7 @@ public:
 	}
 
 	/**
-	 * °¢ Session¿¡¼­ ¹ŞÀº PacketÀ» Ã³¸®ÇÑ´Ù.
+	 * ê° Sessionì—ì„œ ë°›ì€ Packetì„ ì²˜ë¦¬í•œë‹¤.
 	 **/
 	void ProcessPacket( const int nSessionID, const char*pData )
 	{
@@ -136,8 +136,8 @@ public:
 
 private:
 	/**
-	 * ºñµ¿±â Accept¸¦ ½ÃÀÛÇÑ´Ù.
-	 * Client°¡ Á¢¼ÓÇÏ¸é ChatServer::handle_accept°¡ È£ÃâµÈ´Ù.
+	 * ë¹„ë™ê¸° Acceptë¥¼ ì‹œì‘í•œë‹¤.
+	 * Clientê°€ ì ‘ì†í•˜ë©´ ChatServer::handle_acceptê°€ í˜¸ì¶œëœë‹¤.
 	 **/
 	bool PostAccept()
 	{
@@ -162,9 +162,9 @@ private:
 	}
 
 	/**
-	 * Client°¡ Á¢¼ÓÇßÀ¸¸é SessionÀ» ÃÊ±âÈ­ ÇÏ°í ¼ö½ÅÀ» ½ÃÀÛÇÑ´Ù.
-	 * ¼­¹ö´Â ¹ŞÀº µ¥ÀÌÅÍ¿¡ ´ëÇØ¼­¸¸ ÀÀ´äÀ» ÇÏ±â À§ÇØ ¹ß½ÅÀ» ÇÑ´Ù.
-	 * µû¶ó¼­ º°µµ·Î ¹ß½ÅÇÏ´Â ÇÔ¼ö´Â ¾ø´Ù.
+	 * Clientê°€ ì ‘ì†í–ˆìœ¼ë©´ Sessionì„ ì´ˆê¸°í™” í•˜ê³  ìˆ˜ì‹ ì„ ì‹œì‘í•œë‹¤.
+	 * ì„œë²„ëŠ” ë°›ì€ ë°ì´í„°ì— ëŒ€í•´ì„œë§Œ ì‘ë‹µì„ í•˜ê¸° ìœ„í•´ ë°œì‹ ì„ í•œë‹¤.
+	 * ë”°ë¼ì„œ ë³„ë„ë¡œ ë°œì‹ í•˜ëŠ” í•¨ìˆ˜ëŠ” ì—†ë‹¤.
 	 **/
 	void handle_accept(Session* pSession, const boost::system::error_code& error)
 	{

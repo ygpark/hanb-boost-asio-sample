@@ -1,5 +1,11 @@
 #pragma once 
 
+/**
+ * ì•½ì–´
+ *   - REQ: Request. Clientë¡œ ë¶€í„° ë°›ì€ ìš”ì²­
+ *   - RES: Respond. Clientë¡œ ë¶€í„° ë°›ì€ ìš”ì²­ì— ëŒ€í•œ ì‘ë‹µ
+ **/
+
 
 const unsigned short PORT_NUMBER = 31400;
 
@@ -11,9 +17,9 @@ const int MAX_MESSAGE_LEN = 129;
 
 
 /**
- * PACKET_HEADER - ÆĞÅ¶ Çì´õ. ¿©±â¼­´Â ¾Õ 2¹ÙÀÌÆ®.
- * @ nID	¸í·ÉÀÇ Á¾·ù
- * @ nSize	ÇöÀç ±¸Á¶Ã¼ÀÇ ÀüÃ¼ »çÀÌÁî.
+ * PACKET_HEADER - íŒ¨í‚· í—¤ë”
+ * @ nID	ëª…ë ¹ì˜ ì¢…ë¥˜
+ * @ nSize	í˜„ì¬ êµ¬ì¡°ì²´ì˜ ì „ì²´ ì‚¬ì´ì¦ˆ.
  **/
 struct PACKET_HEADER
 {
@@ -23,7 +29,6 @@ struct PACKET_HEADER
 
 
 
-//  ÆĞÅ¶
 const short REQ_IN		= 1;
 	// PKT_REQ_IN
 
@@ -36,7 +41,11 @@ const short REQ_CHAT	= 6;
 const short NOTICE_CHAT = 7;
 	// PKT_NOTICE_CHAT
 
-
+/**
+ * PKT_REQ_IN - ìœ ì €ê°€ ì…ì¥í–ˆìŒì„ ì•Œë¦¼.
+ *
+ * ë°©í–¥: Client to Server
+ **/
 struct PKT_REQ_IN : public PACKET_HEADER
 {
 	void Init()
@@ -49,6 +58,11 @@ struct PKT_REQ_IN : public PACKET_HEADER
 	char szName[MAX_NAME_LEN];
 };
 
+/**
+ * PKT_RES_IN - PKT_RES_OUTì— ëŒ€í•œ ì‘ë‹µ.
+ *
+ * ë°©í–¥: Server to Client
+ **/
 struct PKT_RES_IN : public PACKET_HEADER
 {
 	void Init()

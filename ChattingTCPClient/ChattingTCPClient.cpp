@@ -97,14 +97,14 @@ private:
 	{
 		if (!error)
 		{	
-			std::cout << "¼­¹ö Á¢¼Ó ¼º°ø" << std::endl;
-			std::cout << "ÀÌ¸§À» ÀÔ·ÂÇÏ¼¼¿ä!!" << std::endl;
+			std::cout << "ì„œë²„ ì ‘ì† ì„±ê³µ" << std::endl;
+			std::cout << "ì´ë¦„ì„ ìž…ë ¥í•˜ì„¸ìš”!!" << std::endl;
 
 			PostReceive();
 		}
 		else
 		{
-			std::cout << "¼­¹ö Á¢¼Ó ½ÇÆÐ. error No: " << error.value() << " error Message: " << error.message() << std::endl;
+			std::cout << "ì„œë²„ ì ‘ì† ì‹¤íŒ¨. error No: " << error.value() << " error Message: " << error.message() << std::endl;
 		}
 	}
 
@@ -138,7 +138,7 @@ private:
 		{
 			if( error == boost::asio::error::eof )
 			{
-				std::cout << "Å¬¶óÀÌ¾ðÆ®¿Í ¿¬°áÀÌ ²÷¾îÁ³½À´Ï´Ù" << std::endl;
+				std::cout << "í´ë¼ì´ì–¸íŠ¸ì™€ ì—°ê²°ì´ ëŠì–´ì¡ŒìŠµë‹ˆë‹¤" << std::endl;
 			}
 			else 
 			{
@@ -202,7 +202,7 @@ private:
 				
 				LoginOK();
 				
-				std::cout << "Å¬¶óÀÌ¾ðÆ® ·Î±×ÀÎ ¼º°ø ?: " << pPacket->bIsSuccess << std::endl; 
+				std::cout << "í´ë¼ì´ì–¸íŠ¸ ë¡œê·¸ì¸ ì„±ê³µ ?: " << pPacket->bIsSuccess << std::endl; 
 			}
 			break;
 		case NOTICE_CHAT:
@@ -259,7 +259,7 @@ int main()
 
 		if( Client.IsConnecting() == false )
 		{
-			//std::cout << "¼­¹ö¿Í ¿¬°áµÇÁö ¾Ê¾Ò½À´Ï´Ù" << std::endl;
+			//std::cout << "ì„œë²„ì™€ ì—°ê²°ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤" << std::endl;
 			std::cout << "no server" << std::endl;
 			continue;
 		}
@@ -290,7 +290,7 @@ int main()
 	
     thread.join();
   
-	//std::cout << "Å¬¶óÀÌ¾ðÆ®¸¦ Á¾·áÇØ ÁÖ¼¼¿ä" << std::endl;
+	//std::cout << "í´ë¼ì´ì–¸íŠ¸ë¥¼ ì¢…ë£Œí•´ ì£¼ì„¸ìš”" << std::endl;
 	std::cout << "exit the client" << std::endl;
 
 	return 0;
