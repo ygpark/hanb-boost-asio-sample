@@ -12,11 +12,10 @@
 
 /*
  * ChatServer - 채팅 서버
- * 
  * <흐름도>
  *
- *	A|	ChatServer::Init()						//+ SessionPool을 100개 생성
- *	 |		--> ChatServer::Start()				//+ Accept시작
+ *	A|	ChatServer::Init()				//+ SessionPool을 100개 생성
+ *	 |		--> ChatServer::Start()			//+ Accept시작
  *	 |			--> ChatServer::PostAccept()	//- Accept시작
  *	 
  *	B|	...대기...
