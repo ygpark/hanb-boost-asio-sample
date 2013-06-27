@@ -1,5 +1,6 @@
 EXECUTABLE=server
-CXXSOURCES= ServerMain.cpp ServerSession.cpp
+
+CXXSOURCES= ServerMain.cpp ServerSession.cpp ChattingServer.cpp
 
 CSOURCES=
 
@@ -29,7 +30,7 @@ SIZE=${CROSS_COMPILE}size
 # Compiler Option
 #
 MODE            ?= debug        # debug / release
-DEBUG           := -g
+DEBUG           := -g -DCONFIG_PRINT_DEBUG_MSG
 OPTIMIZE        := -O2
 WARNING         := -Wall
 MANUAL_LINKER   := -c
@@ -52,6 +53,7 @@ LDFLAGS =  $(LIBPATH) $(INCLUDEPATH) $(LIBS)
 CXXOBJECTS=$(CXXSOURCES:.cpp=.o)
 COBJECTS=$(CSOURCES:.c=.o)
 
+
 all: $(CXXSOURCES) $(CSOURCES) $(EXECUTABLE)
 
 
@@ -60,8 +62,10 @@ $(EXECUTABLE): $(CXXOBJECTS) $(COBJECTS)
 
 .cpp.o:
 	$(CXX) $(CFLAGS) $< -o $@
+
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@
+
 clean:
 	rm -f $(COBJECTS)
 	rm -f $(CXXOBJECTS)
@@ -76,3 +80,6 @@ distclean: clean
 	rm -f cscope.out
 	rm -f cscope.files
 	rm -f $(EXECUTABLE)
+
+depend:
+	gccmakedep -- $(CFLAGS) -- $(CXXSOURCES)

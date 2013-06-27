@@ -1,5 +1,5 @@
 EXECUTABLE=client
-CXXSOURCES= ChattingTCPClient.cpp
+CXXSOURCES= main.cpp ChattingTCPClient.cpp
 
 CSOURCES=
 
@@ -29,15 +29,15 @@ SIZE=${CROSS_COMPILE}size
 # Compiler Option
 #
 MODE            ?= debug        # debug / release
-DEBUG           := -g
+DEBUG           := -g -DCONFIG_PRINT_DEBUG_MSG
 OPTIMIZE        := -O2
 WARNING         := -Wall
 MANUAL_LINKER   := -c
 LIBCXXVER	:= -std=c++11
 ifeq ($(MODE), release)
-CFLAGS=$(MANUAL_LINKER) $(WARNING) $(OPTIMIZE) $(LIBCXXVER)
+	CFLAGS:=$(MANUAL_LINKER) $(WARNING) $(OPTIMIZE) $(LIBCXXVER)
 else
-CFLAGS=$(MANUAL_LINKER) $(WARNING) $(OPTIMIZE) $(LIBCXXVER) $(DEBUG)
+	CFLAGS:=$(MANUAL_LINKER) $(WARNING) $(OPTIMIZE) $(LIBCXXVER) $(DEBUG)
 endif
 
 #
@@ -74,3 +74,6 @@ distclean: clean
 	rm -f cscope.out
 	rm -f cscope.files
 	rm -f $(EXECUTABLE)
+
+depend:
+	gccmakedep -- $(CFLAGS) -- $(CXXSOURCES)

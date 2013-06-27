@@ -1,0 +1,191 @@
+#include "ChattingServer.h"
+
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <vector>
+#include "ServerSession.h"
+
+
+/**
+ * ChatServer - 채팅 서버
+ * <흐름도>
+ *
+ *	A|	ChatServer::Init()				//+ SessionPool을 100개 생성
+ *	 |		--> ChatServer::Start()			//+ Accept시작
+ *	 |			--> ChatServer::PostAccept()	//- Accept시작
+ *	 
+ *	B|	...대기...
+ *
+ *	C|	Client접속
+ *	 |		--> -ChatServer::handle_accept()
+ *	 |			--> Session::Init()
+ *	 |			    Session::PostReceive()
+ *	 |			    ChatServer::PostAccept()
+ *				    B로 이동
+ **/
+
+ChatServer::ChatServer( boost::asio::io_service& io_service )
+	: m_acceptor(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), PORT_NUMBER))
+{
+	m_bIsAccepting = false;
+}
+
+ChatServer::~ChatServer()
+{
+	for( size_t i = 0; i < m_SessionPool.size(); ++i )
+	{
+		if( m_SessionPool[i]->Socket().is_open() )
+		{
+			m_SessionPool[i]->Socket().close();
+		}
+
+		delete m_SessionPool[i];
+	}
+}
+
+void ChatServer::Init( const int nMaxSessionCount )
+{
+	for( int i = 0; i < nMaxSessionCount; ++i )
+	{
+		Session* pSession = new Session( i, m_acceptor.get_io_service(), this );
+		m_SessionPool.push_back( pSession );
+		m_SessionTickets.push_back( i );
+	}
+}
+
+void ChatServer::Start()
+{
+	std::cout << "Start Server....." << std::endl;
+
+	PostAccept();
+}
+
+
+
+/**
+ * Session을 Poll에 반납한다.
+ * 만일 Session Pool이 가득차서 Accept가 중지된 상태라면 다시 Accept한다.
+ **/
+void ChatServer::CloseSession( const int nSessionID )
+{
+	std::cout << "Client is disconnected. Session ID: " << nSessionID << std::endl;
+
+	m_SessionTickets.push_back( nSessionID );
+
+	if( m_bIsAccepting == false )
+	{
+		PostAccept();
+	}
+}
+
+
+
+
+
+/**
+ * 각 Session에서 받은 Packet을 처리한다.
+ **/
+void ChatServer::ProcessPacket( const int nSessionID, const char*pData )
+{
+	PACKET_HEADER* pheader = (PACKET_HEADER*)pData;
+
+	switch( pheader->nID )
+	{
+
+	/**
+	 * REQ_IN 요청을 보낸 Client에게만 리턴을 준다.
+	 **/
+	case REQ_IN:
+		{
+			PKT_REQ_IN* pPacket = (PKT_REQ_IN*)pData;
+			m_SessionPool[ nSessionID ]->SetName( pPacket->szName );
+
+			std::cout << "User Name: " << m_SessionPool[ nSessionID ]->GetName() << std::endl; 
+
+			PKT_RES_IN SendPkt;
+			SendPkt.Init();
+			SendPkt.bIsSuccess = true;
+			
+			m_SessionPool[ nSessionID ]->PostSend( SendPkt.nSize, (char*)&SendPkt ); 
+		}
+		break;
+	/**
+	 * REQ_CHAT 요청을 보낸 Client를 포함한 모든 Client에게 REQ_NOTICE_CHAT 패킷을 보낸다.
+	 **/
+	case REQ_CHAT:
+		{
+			PKT_REQ_CHAT* pPacket = (PKT_REQ_CHAT*)pData;
+
+			PKT_NOTICE_CHAT SendPkt;
+			SendPkt.Init();
+			//strncpy_s( SendPkt.szName, MAX_NAME_LEN, m_SessionPool[ nSessionID ]->GetName(), MAX_NAME_LEN-1 );
+			//strncpy_s( SendPkt.szMessage, MAX_MESSAGE_LEN, pPacket->szMessage, MAX_MESSAGE_LEN-1 );
+			strncpy( SendPkt.szName, m_SessionPool[ nSessionID ]->GetName(), MAX_NAME_LEN-1 );
+			strncpy( SendPkt.szMessage, pPacket->szMessage, MAX_MESSAGE_LEN-1 );
+
+			size_t nTotalSessionCount = m_SessionPool.size();
+			
+			for( size_t i = 0; i < nTotalSessionCount; ++i )
+			{
+				if( m_SessionPool[ i ]->Socket().is_open() )
+				{
+					m_SessionPool[ i ]->PostSend( SendPkt.nSize, (char*)&SendPkt ); 
+				}
+			}
+		}
+		break;
+	}
+
+	return;
+}
+
+
+
+/**
+ * 비동기 Accept를 시작한다.
+ * Client가 접속하면 ChatServer::handle_accept가 호출된다.
+ **/
+bool ChatServer::PostAccept()
+{
+	if( m_SessionTickets.empty() )
+	{
+		m_bIsAccepting = false;
+		return false;
+	}
+			
+	m_bIsAccepting = true;
+	int nSessionID = m_SessionTickets.front();
+
+	m_SessionTickets.pop_front();
+	m_acceptor.async_accept( m_SessionPool[nSessionID]->Socket(),
+				boost::bind(&ChatServer::handle_accept, 
+				this, 
+				m_SessionPool[nSessionID],
+				boost::asio::placeholders::error)
+				);
+
+	return true;
+}
+
+/**
+ * Client가 접속했으면 Session을 초기화 하고 수신을 시작한다.
+ * 서버는 받은 데이터에 대해서만 응답을 하기 위해 발신을 한다.
+ * 따라서 별도로 발신하는 함수는 없다.
+ **/
+void ChatServer::handle_accept(Session* pSession, const boost::system::error_code& error)
+{
+	if (!error)
+	{	
+		std::cout << "Client is connected. SessionID: " << pSession->SessionID() << std::endl;
+		
+		pSession->Init();
+		pSession->PostReceive();
+		
+		PostAccept();
+	}
+	else 
+	{
+		std::cout << "error No: " << error.value() << " error Message: " << error.message() << std::endl;
+	}
+}

@@ -1,5 +1,5 @@
-#pragma once
-//#include <SDKDDKVer.h>
+#ifndef _SERVER_SESSION_H_
+#define _SERVER_SESSION_H_
 
 #include <deque>
 
@@ -55,3 +55,5 @@ private:
 	ChatServer* m_pServer;
 	boost::mutex m_lock;
 };
+
+#endif //_SERVER_SESSION_H_

@@ -1,10 +1,16 @@
 #pragma once 
+#ifndef _PROTOCOL_H_
+#define _PROTOCOL_H_
 
 /**
+ * Protoco.h - 소켓 통신 프로토콜을 정의한다.
+ *
  * 약어
  *   - REQ: Request. Client로 부터 받은 요청
  *   - RES: Respond. Client로 부터 받은 요청에 대한 응답
  **/
+
+#include <cstring>
 
 
 const unsigned short PORT_NUMBER = 31400;
@@ -100,3 +106,5 @@ struct PKT_NOTICE_CHAT : public PACKET_HEADER
 	char szName[MAX_NAME_LEN]; 
 	char szMessage[MAX_MESSAGE_LEN];
 };
+
+#endif //_PROTOCOL_H_

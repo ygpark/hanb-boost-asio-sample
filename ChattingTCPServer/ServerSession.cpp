@@ -13,10 +13,7 @@
 #include "ChattingServer.h"
 
 
-
-#define USE_DEBUG
-
-#ifdef USE_DEBUG
+#ifdef CONFIG_PRINT_DEBUG_MSG
     #define MODULE_NAME "[debug] "
     #define debug(fmt, arg...)    do{printf(MODULE_NAME  "%s:%d: " fmt, __func__, __LINE__ , ##arg); }while(0)
 #else
