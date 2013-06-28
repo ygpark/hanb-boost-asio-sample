@@ -34,7 +34,8 @@ DEBUG           := -g -DCONFIG_PRINT_DEBUG_MSG
 OPTIMIZE        := -O2
 WARNING         := -Wall
 MANUAL_LINKER   := -c
-LIBCXXVER	:= -std=c++11
+LIBCXXVER	:= 
+#LIBCXXVER	:= -std=c++11
 ifeq ($(MODE), release)
 CFLAGS=$(MANUAL_LINKER) $(WARNING) $(OPTIMIZE) $(LIBCXXVER)
 else

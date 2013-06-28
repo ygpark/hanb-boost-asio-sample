@@ -1,6 +1,16 @@
-#include <boost/thread.hpp>
+#include <pthread.h>
 
 #include "ChattingTCPClient.h"
+
+static boost::asio::io_service io_service;
+
+void *asio_thread(void *)
+{
+	io_service.run();
+
+	return NULL;
+}
+
 
 /**
  * main - 한줄 씩 읽어서 서버로 보낸다.
@@ -10,16 +20,18 @@
  **/
 int main()
 {
-	boost::asio::io_service io_service;
+	pthread_t tid;
 
-	auto endpoint = boost::asio::ip::tcp::endpoint( 
-				boost::asio::ip::address::from_string("127.0.0.1"), 
-				PORT_NUMBER);
+	boost::asio::ip::tcp::endpoint endpoint = boost::asio::ip::tcp::endpoint( 
+							boost::asio::ip::address::from_string("127.0.0.1"), 
+							PORT_NUMBER);
 
 	ChatClient Client( io_service );
 	Client.Connect( endpoint );
 
-	boost::thread thread( boost::bind(&boost::asio::io_service::run, &io_service) );
+	//boost::thread thread( boost::bind(&boost::asio::io_service::run, &io_service) );
+	pthread_create(&tid, NULL, asio_thread, NULL);
+
 		
 
 	char szInputMessage[MAX_MESSAGE_LEN * 2] = {0,};
@@ -76,7 +88,8 @@ int main()
 
 	Client.Close();
 	
-	thread.join();
+	//thread.join();
+	pthread_join(tid, NULL);
   
 	std::cout << "client is terminated." << std::endl;
 

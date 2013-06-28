@@ -28,6 +28,7 @@ Session::Session(int nSessionID, boost::asio::io_service& io_service, ChatServer
 		, m_nSessionID( nSessionID )
 		, m_pServer( pServer )
 {
+	pthread_mutex_init(&m_lock, NULL);
 }
 
 
@@ -81,7 +82,7 @@ void Session::PostSend( const int nSize, char* pData )
 	char* pSendData = new char[nSize];
 	memcpy( pSendData, pData, nSize);
 
-	m_lock.lock();
+	pthread_mutex_lock(&m_lock);
 	m_SendDataQueue.push_back( pSendData );
 
 	if (m_SendDataQueue.size() < 2) {
@@ -92,7 +93,7 @@ void Session::PostSend( const int nSize, char* pData )
 						boost::asio::placeholders::bytes_transferred )
 					  );
 	}
-	m_lock.unlock();
+	pthread_mutex_unlock(&m_lock);
 }
 
 /**
@@ -111,7 +112,7 @@ void Session::PostSend( const int nSize, char* pData )
  **/
 void Session::handle_write(const boost::system::error_code& error, size_t bytes_transferred)
 {
-	m_lock.lock();
+	pthread_mutex_lock(&m_lock);
 
 	delete[] m_SendDataQueue.front();
 	m_SendDataQueue.pop_front();
@@ -131,7 +132,7 @@ void Session::handle_write(const boost::system::error_code& error, size_t bytes_
 					);
 	}
 
-	m_lock.unlock();
+	pthread_mutex_unlock(&m_lock);
 }
 
 

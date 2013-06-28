@@ -33,7 +33,8 @@ DEBUG           := -g -DCONFIG_PRINT_DEBUG_MSG
 OPTIMIZE        := -O2
 WARNING         := -Wall
 MANUAL_LINKER   := -c
-LIBCXXVER	:= -std=c++11
+#LIBCXXVER	:= -std=c++11
+LIBCXXVER	:= 
 ifeq ($(MODE), release)
 	CFLAGS:=$(MANUAL_LINKER) $(WARNING) $(OPTIMIZE) $(LIBCXXVER)
 else
@@ -45,7 +46,7 @@ endif
 #
 LIBPATH         =-L./lib
 INCLUDEPATH     =-I./include
-LIBS            =-lpthread -lboost_system -lboost_thread
+LIBS            =-lpthread -lboost_system
 LDFLAGS =  $(LIBPATH) $(INCLUDEPATH) $(LIBS)
 
 

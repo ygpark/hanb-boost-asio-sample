@@ -18,6 +18,7 @@ ChatClient::ChatClient(boost::asio::io_service& io_service)
 	  m_Socket(io_service)
 {
 	m_bIsLogin = false;
+	pthread_mutex_init(&m_lock, NULL);
 }
 
 /**
@@ -25,7 +26,8 @@ ChatClient::ChatClient(boost::asio::io_service& io_service)
  **/
 ChatClient::~ChatClient()
 {
-	m_lock.lock();
+	//m_lock.lock();
+	pthread_mutex_lock(&m_lock);
 
 	while( m_SendDataQueue.empty() == false )
 	{
@@ -33,7 +35,8 @@ ChatClient::~ChatClient()
 		m_SendDataQueue.pop_front();
 	}
 
-	m_lock.unlock();
+	//m_lock.unlock();
+	pthread_mutex_unlock(&m_lock);
 }
 	
 /**
@@ -72,7 +75,8 @@ void ChatClient::PostSend( const int nSize, char* pData )
 	char* pSendData = new char[nSize];
 	memcpy( pSendData, pData, nSize);
 
-	m_lock.lock();
+	//m_lock.lock();
+	pthread_mutex_lock(&m_lock);
 
 	m_SendDataQueue.push_back( pSendData );
 
@@ -89,7 +93,8 @@ void ChatClient::PostSend( const int nSize, char* pData )
 					);
 	}
 
-	m_lock.unlock();
+	//m_lock.unlock();
+	pthread_mutex_unlock(&m_lock);
 }
 
 	
@@ -132,13 +137,14 @@ void ChatClient::handle_connect(const boost::system::error_code& error)
 
 void ChatClient::handle_write(const boost::system::error_code& error, size_t bytes_transferred)
 {
-	m_lock.lock();
+	//m_lock.lock();
+	pthread_mutex_lock(&m_lock);
 
 	/* 보낸 메모리를 해제하고 포인터를 버림. */
 	delete[] m_SendDataQueue.front();
 	m_SendDataQueue.pop_front();
 
-	char* pData = nullptr;
+	char* pData = NULL;
 
 	/* 보낼 데이터가 있으면 포인터를 꺼냄  */
 	if( m_SendDataQueue.empty() == false )
@@ -146,11 +152,12 @@ void ChatClient::handle_write(const boost::system::error_code& error, size_t byt
 		pData = m_SendDataQueue.front();
 	}
 	
-	m_lock.unlock();
+	//m_lock.unlock();
+	pthread_mutex_unlock(&m_lock);
 
 	
 	/* 포인터가 NULL인지 아닌지 확인해 보고 PostSend()로 보냄. */
-	if( pData != nullptr )
+	if( pData != NULL )
 	{
 		PACKET_HEADER* pHeader = (PACKET_HEADER*)pData;
 		PostSend( pHeader->nSize, pData );

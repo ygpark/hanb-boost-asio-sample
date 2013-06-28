@@ -2,7 +2,8 @@
 #define ___CHATCLIENT_H___
 
 #include <boost/asio.hpp>
-#include <boost/thread.hpp>	//boost::mutex
+#include <boost/array.hpp>
+#include <pthread.h>
 #include <deque>
 
 #include "Protocol.h"
@@ -31,12 +32,14 @@ private:
 	boost::asio::io_service& m_IOService;
 	boost::asio::ip::tcp::socket m_Socket;
 
-	std::array<char, MAX_RECEIVE_BUFFER_LEN> m_ReceiveBuffer;
+	//std::array<char, MAX_RECEIVE_BUFFER_LEN> m_ReceiveBuffer;
+	boost::array<char, MAX_RECEIVE_BUFFER_LEN> m_ReceiveBuffer;
 	
 	int m_nPacketBufferMark;
 	char m_PacketBuffer[MAX_RECEIVE_BUFFER_LEN*2];	//512 * 2 = 1024
 
-	boost::mutex m_lock;
+	//boost::mutex m_lock;
+	pthread_mutex_t m_lock;
 	std::deque< char* > m_SendDataQueue;
 
 	bool m_bIsLogin;

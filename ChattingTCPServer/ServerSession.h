@@ -5,7 +5,8 @@
 
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
-#include <boost/thread.hpp>
+#include <boost/array.hpp>
+#include <pthread.h>
 
 #include "Protocol.h"
 
@@ -43,7 +44,7 @@ private:
 	int m_nSessionID;
 	boost::asio::ip::tcp::socket m_Socket;
 	
-	std::array<char, MAX_RECEIVE_BUFFER_LEN> m_ReceiveBuffer;
+	boost::array<char, MAX_RECEIVE_BUFFER_LEN> m_ReceiveBuffer;
 
 	int m_nPacketBufferMark;
 	char m_PacketBuffer[MAX_RECEIVE_BUFFER_LEN*2];
@@ -53,7 +54,7 @@ private:
 	std::string m_Name;
 
 	ChatServer* m_pServer;
-	boost::mutex m_lock;
+	pthread_mutex_t m_lock;
 };
 
 #endif //_SERVER_SESSION_H_
