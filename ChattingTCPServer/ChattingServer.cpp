@@ -25,8 +25,8 @@
  *				    B로 이동
  **/
 
-ChatServer::ChatServer( boost::asio::io_service& io_service )
-	: m_acceptor(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), PORT_NUMBER))
+ChatServer::ChatServer( asio::io_service& io_service )
+	: m_acceptor(io_service, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), PORT_NUMBER))
 {
 	m_bIsAccepting = false;
 }
@@ -162,7 +162,7 @@ bool ChatServer::PostAccept()
 				boost::bind(&ChatServer::handle_accept, 
 				this, 
 				m_SessionPool[nSessionID],
-				boost::asio::placeholders::error)
+				asio::placeholders::error)
 				);
 
 	return true;
@@ -173,7 +173,7 @@ bool ChatServer::PostAccept()
  * 서버는 받은 데이터에 대해서만 응답을 하기 위해 발신을 한다.
  * 따라서 별도로 발신하는 함수는 없다.
  **/
-void ChatServer::handle_accept(Session* pSession, const boost::system::error_code& error)
+void ChatServer::handle_accept(Session* pSession, const asio::error_code& error)
 {
 	if (!error)
 	{	

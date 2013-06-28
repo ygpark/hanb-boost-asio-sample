@@ -4,8 +4,8 @@
 #include <deque>
 
 #include <boost/bind.hpp>
-#include <boost/asio.hpp>
 #include <boost/array.hpp>
+#include <asio.hpp>
 #include <pthread.h>
 
 #include "Protocol.h"
@@ -16,12 +16,12 @@ class ChatServer;
 class Session 
 {
 public:
-	Session(int nSessionID, boost::asio::io_service& io_service, ChatServer* pServer);
+	Session(int nSessionID, asio::io_service& io_service, ChatServer* pServer);
 	~Session();
 
 	int SessionID() { return m_nSessionID; }
 
-	boost::asio::ip::tcp::socket& Socket() { return m_Socket; }
+	asio::ip::tcp::socket& Socket() { return m_Socket; }
 
 	void Init();
 
@@ -34,15 +34,15 @@ public:
 
 
 private:
-	void handle_write(const boost::system::error_code& error, size_t bytes_transferred);
+	void handle_write(const asio::error_code& error, size_t bytes_transferred);
 	
-	void handle_receive( const boost::system::error_code& error, size_t bytes_transferred );
+	void handle_receive( const asio::error_code& error, size_t bytes_transferred );
 	
 	
 
 
 	int m_nSessionID;
-	boost::asio::ip::tcp::socket m_Socket;
+	asio::ip::tcp::socket m_Socket;
 	
 	boost::array<char, MAX_RECEIVE_BUFFER_LEN> m_ReceiveBuffer;
 
