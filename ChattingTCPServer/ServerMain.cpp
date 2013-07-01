@@ -3,8 +3,6 @@
 
 #include "ChattingServer.h"
 
-#include <vector>
-
 const int MAX_SESSION_COUNT = 100;
 
 int main()
@@ -17,8 +15,6 @@ int main()
     
 	io_service.run();
   
-	std::vector<int> vi;
-
 	std:: cout << "네트웍 접속 종료" << std::endl;
 
 	getchar();
