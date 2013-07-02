@@ -154,7 +154,11 @@ void ChatClient::handle_write(const asio::error_code& error, size_t bytes_transf
 	if( pData != NULL )
 	{
 		PACKET_HEADER* pHeader = (PACKET_HEADER*)pData;
-		PostSend( pHeader->nSize, pData );
+		asio::async_write( m_Socket, asio::buffer( pData, pHeader->nSize ),
+					  boost::bind( &ChatClient::handle_write, this,
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred )
+					);
 	}
 }
 
