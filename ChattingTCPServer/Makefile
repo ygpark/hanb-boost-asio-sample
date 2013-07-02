@@ -36,19 +36,19 @@ WARNING         := -Wall
 MANUAL_LINKER   := -c
 LIBCXXVER	:= 
 #LIBCXXVER	:= -std=c++11
+INCLUDEPATH     =-I./include -I ../asio-1.4.8/include/
 ifeq ($(MODE), release)
-CFLAGS=$(MANUAL_LINKER) $(WARNING) $(OPTIMIZE) $(LIBCXXVER)
+CFLAGS=$(MANUAL_LINKER) $(WARNING) $(OPTIMIZE) $(LIBCXXVER) $(INCLUDEPATH)
 else
-CFLAGS=$(MANUAL_LINKER) $(WARNING) $(OPTIMIZE) $(LIBCXXVER) $(DEBUG)
+CFLAGS=$(MANUAL_LINKER) $(WARNING) $(OPTIMIZE) $(LIBCXXVER) $(INCLUDEPATH) $(DEBUG)
 endif
 
 #
 # Linker Option
 #
 LIBPATH         =-L./lib
-INCLUDEPATH     =-I./include
 LIBS            =-lpthread -lboost_system
-LDFLAGS =  $(LIBPATH) $(INCLUDEPATH) $(LIBS)
+LDFLAGS =  $(LIBPATH) $(LIBS)
 
 
 CXXOBJECTS=$(CXXSOURCES:.cpp=.o)

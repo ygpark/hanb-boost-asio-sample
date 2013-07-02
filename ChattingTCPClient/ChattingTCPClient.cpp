@@ -13,7 +13,7 @@
 /**
  * 생성자 - 
  **/
-ChatClient::ChatClient(boost::asio::io_service& io_service)
+ChatClient::ChatClient(asio::io_service& io_service)
 	: m_IOService(io_service),
 	  m_Socket(io_service)
 {
@@ -26,7 +26,6 @@ ChatClient::ChatClient(boost::asio::io_service& io_service)
  **/
 ChatClient::~ChatClient()
 {
-	//m_lock.lock();
 	pthread_mutex_lock(&m_lock);
 
 	while( m_SendDataQueue.empty() == false )
@@ -35,7 +34,6 @@ ChatClient::~ChatClient()
 		m_SendDataQueue.pop_front();
 	}
 
-	//m_lock.unlock();
 	pthread_mutex_unlock(&m_lock);
 }
 	
@@ -44,13 +42,13 @@ ChatClient::~ChatClient()
  *
  * 접속이 완료되거나 에러가 발생하면 handle_connect()함수가 호출된다.
  **/
-void ChatClient::Connect( boost::asio::ip::tcp::endpoint endpoint )
+void ChatClient::Connect( asio::ip::tcp::endpoint endpoint )
 {
 	m_nPacketBufferMark = 0;
 
 	m_Socket.async_connect( endpoint,
 				boost::bind(&ChatClient::handle_connect, this,
-					boost::asio::placeholders::error)
+					asio::placeholders::error)
 				);
 }
 
@@ -75,25 +73,23 @@ void ChatClient::PostSend( const int nSize, char* pData )
 	char* pSendData = new char[nSize];
 	memcpy( pSendData, pData, nSize);
 
-	//m_lock.lock();
 	pthread_mutex_lock(&m_lock);
 
 	m_SendDataQueue.push_back( pSendData );
 
 	/**
 	 * 큐 사이즈가 1인 경우만 async_write를 호출.
-	 * 그보다 큰 경우는 handle_write()에서 boost::asio::async_write를 호출할 것임.
+	 * 그보다 큰 경우는 handle_write()에서 asio::async_write를 호출할 것임.
 	 **/
 	if( m_SendDataQueue.size() < 2 )
 	{
-		boost::asio::async_write( m_Socket, boost::asio::buffer( pSendData, nSize ),
+		asio::async_write( m_Socket, asio::buffer( pSendData, nSize ),
 					  boost::bind( &ChatClient::handle_write, this,
-						boost::asio::placeholders::error,
-						boost::asio::placeholders::bytes_transferred )
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred )
 					);
 	}
 
-	//m_lock.unlock();
 	pthread_mutex_unlock(&m_lock);
 }
 
@@ -107,11 +103,11 @@ void ChatClient::PostReceive()
 {
 	memset( &m_ReceiveBuffer, '\0', sizeof(m_ReceiveBuffer) );
 
-	m_Socket.async_read_some( boost::asio::buffer(m_ReceiveBuffer), 
+	m_Socket.async_read_some( asio::buffer(m_ReceiveBuffer), 
 				  boost::bind( &ChatClient::handle_receive,
 					this, 
-					boost::asio::placeholders::error, 
-					boost::asio::placeholders::bytes_transferred ) 
+					asio::placeholders::error, 
+					asio::placeholders::bytes_transferred ) 
 				);
 }
 
@@ -120,7 +116,7 @@ void ChatClient::PostReceive()
  *
  * 접속이 완료되거나 에러가 발생하면 handle_connect()함수가 호출된다.
  **/
-void ChatClient::handle_connect(const boost::system::error_code& error)
+void ChatClient::handle_connect(const asio::error_code& error)
 {
 	if (!error)
 	{	
@@ -135,9 +131,8 @@ void ChatClient::handle_connect(const boost::system::error_code& error)
 	}
 }
 
-void ChatClient::handle_write(const boost::system::error_code& error, size_t bytes_transferred)
+void ChatClient::handle_write(const asio::error_code& error, size_t bytes_transferred)
 {
-	//m_lock.lock();
 	pthread_mutex_lock(&m_lock);
 
 	/* 보낸 메모리를 해제하고 포인터를 버림. */
@@ -152,7 +147,6 @@ void ChatClient::handle_write(const boost::system::error_code& error, size_t byt
 		pData = m_SendDataQueue.front();
 	}
 	
-	//m_lock.unlock();
 	pthread_mutex_unlock(&m_lock);
 
 	
@@ -160,24 +154,28 @@ void ChatClient::handle_write(const boost::system::error_code& error, size_t byt
 	if( pData != NULL )
 	{
 		PACKET_HEADER* pHeader = (PACKET_HEADER*)pData;
-		PostSend( pHeader->nSize, pData );
+		asio::async_write( m_Socket, asio::buffer( pData, pHeader->nSize ),
+					  boost::bind( &ChatClient::handle_write, this,
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred )
+					);
 	}
 }
 
 /**
- * handle_receive - boost::asio::read_some함수의 완료함수.
+ * handle_receive - asio::read_some함수의 완료함수.
  * 
  * read_some()함수는 특별히 읽는 사이즈를 정하지 않기 때문에 읽고나서 잘라야한다.
  * 수신된 데이터는 m_ReceiveBuffer(512 byte)에 들어있다.
  **/
-void ChatClient::handle_receive( const boost::system::error_code& error, size_t bytes_transferred )
+void ChatClient::handle_receive( const asio::error_code& error, size_t bytes_transferred )
 {
 	if( error )
 	{
 		/**
 		 * 에러처리
 		 **/
-		if( error == boost::asio::error::eof ) {
+		if( error == asio::error::eof ) {
 			std::cout << "Disconnected with server." << std::endl;
 		} else {
 			std::cout << "error No: " << error.value() << " error Message: " << error.message() << std::endl;

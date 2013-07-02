@@ -2,7 +2,7 @@
 
 #include "ChattingTCPClient.h"
 
-static boost::asio::io_service io_service;
+static asio::io_service io_service;
 
 void *asio_thread(void *)
 {
@@ -22,14 +22,14 @@ int main()
 {
 	pthread_t tid;
 
-	boost::asio::ip::tcp::endpoint endpoint = boost::asio::ip::tcp::endpoint( 
-							boost::asio::ip::address::from_string("127.0.0.1"), 
+	asio::ip::tcp::endpoint endpoint = asio::ip::tcp::endpoint( 
+							asio::ip::address::from_string("127.0.0.1"), 
 							PORT_NUMBER);
 
 	ChatClient Client( io_service );
 	Client.Connect( endpoint );
 
-	//boost::thread thread( boost::bind(&boost::asio::io_service::run, &io_service) );
+	//boost::thread thread( boost::bind(&asio::io_service::run, &io_service) );
 	pthread_create(&tid, NULL, asio_thread, NULL);
 
 		

@@ -6,7 +6,7 @@
  * 
  *
  * 추정하는 버그:
- *	1.  handle_write()함수에 PostSend대신 boost::asio::async_write 가 사용되어야 함
+ *	1.  handle_write()함수에 PostSend대신 asio::async_write 가 사용되어야 함
  *	2. 1이 동작하려면 PostSend(), handle_write()함수에 mutex걸려야 함.
  **/
 #include "ServerSession.h"
@@ -23,7 +23,7 @@
 /**
  * 생성자 - 공유 변수 초기화
  **/
-Session::Session(int nSessionID, boost::asio::io_service& io_service, ChatServer* pServer)
+Session::Session(int nSessionID, asio::io_service& io_service, ChatServer* pServer)
 		: m_Socket(io_service)
 		, m_nSessionID( nSessionID )
 		, m_pServer( pServer )
@@ -59,10 +59,10 @@ void Session::PostReceive()
 {
 	m_Socket.async_read_some
 			( 
-			boost::asio::buffer(m_ReceiveBuffer), 
+			asio::buffer(m_ReceiveBuffer), 
 			boost::bind( &Session::handle_receive, this, 
-											boost::asio::placeholders::error, 
-											boost::asio::placeholders::bytes_transferred ) 
+											asio::placeholders::error, 
+											asio::placeholders::bytes_transferred ) 
 				
 		);
 }
@@ -86,11 +86,11 @@ void Session::PostSend( const int nSize, char* pData )
 	m_SendDataQueue.push_back( pSendData );
 
 	if (m_SendDataQueue.size() < 2) {
-		boost::asio::async_write( m_Socket, 
-					  boost::asio::buffer( pSendData, nSize ),
+		asio::async_write( m_Socket, 
+					  asio::buffer( pSendData, nSize ),
 					  boost::bind( &Session::handle_write, this,
-						boost::asio::placeholders::error,
-						boost::asio::placeholders::bytes_transferred )
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred )
 					  );
 	}
 	pthread_mutex_unlock(&m_lock);
@@ -99,7 +99,7 @@ void Session::PostSend( const int nSize, char* pData )
 /**
  * handle_write - 비동기 전송 핸들러
  *
- * boost::asio::async_write함수가 데이터를 모두 보냈거나 에러가 발생하면 자동으로 호출된다.
+ * asio::async_write함수가 데이터를 모두 보냈거나 에러가 발생하면 자동으로 호출된다.
  * 송신을 마쳤으니 송신용 메모리를 해제하고 보낸 데이터를 큐에서 뺀다.
  *
  * 큐에 보낼 데이터가 있으면 보내기를 계속하고 
@@ -110,7 +110,7 @@ void Session::PostSend( const int nSize, char* pData )
  * @bytes_transferred	전송한 바이트 수
  *
  **/
-void Session::handle_write(const boost::system::error_code& error, size_t bytes_transferred)
+void Session::handle_write(const asio::error_code& error, size_t bytes_transferred)
 {
 	pthread_mutex_lock(&m_lock);
 
@@ -124,11 +124,11 @@ void Session::handle_write(const boost::system::error_code& error, size_t bytes_
 		
 		PACKET_HEADER* pHeader = (PACKET_HEADER*)pData;
 
-		boost::asio::async_write( m_Socket, 
-					  boost::asio::buffer( pData, pHeader->nSize ),
+		asio::async_write( m_Socket, 
+					  asio::buffer( pData, pHeader->nSize ),
 					  boost::bind( &Session::handle_write, this,
-						boost::asio::placeholders::error,
-						boost::asio::placeholders::bytes_transferred )
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred )
 					);
 	}
 
@@ -136,11 +136,11 @@ void Session::handle_write(const boost::system::error_code& error, size_t bytes_
 }
 
 
-void Session::handle_receive( const boost::system::error_code& error, size_t bytes_transferred )
+void Session::handle_receive( const asio::error_code& error, size_t bytes_transferred )
 {
 	if( error )
 	{
-		if( error == boost::asio::error::eof )
+		if( error == asio::error::eof )
 		{
 			std::cout << "client is disconnected." << std::endl;
 		}
@@ -166,8 +166,9 @@ void Session::handle_receive( const boost::system::error_code& error, size_t byt
 			}
 
 			PACKET_HEADER* pHeader = (PACKET_HEADER*)&m_PacketBuffer[nReadData];
-			
-			if( pHeader->nSize >= nPacketData )
+
+			//경고: 책에 부등호가 반대로 써져있으니 주의
+			if( pHeader->nSize <= nPacketData )
 			{
 				m_pServer->ProcessPacket( m_nSessionID, &m_PacketBuffer[nReadData] );
 				

@@ -5,7 +5,7 @@
 
 #include <deque>
 #include <vector>
-#include <boost/asio.hpp>
+#include <asio.hpp>
 #include "Protocol.h"
 
 class Session;
@@ -13,7 +13,7 @@ class Session;
 class ChatServer
 {
 public:
-	ChatServer( boost::asio::io_service& io_service );
+	ChatServer( asio::io_service& io_service );
 	~ChatServer();
 
 	void Init( const int nMaxSessionCount );
@@ -24,7 +24,7 @@ public:
 
 private:
 	bool PostAccept();
-	void handle_accept(Session* pSession, const boost::system::error_code& error);
+	void handle_accept(Session* pSession, const asio::error_code& error);
 
 private:
 	int m_nSeqNumber;
@@ -33,7 +33,7 @@ private:
 	std::vector< Session* > m_SessionPool;
 	std::deque< int > m_SessionTickets;
 	
-	boost::asio::ip::tcp::acceptor m_acceptor;
+	asio::ip::tcp::acceptor m_acceptor;
 };
 
 
