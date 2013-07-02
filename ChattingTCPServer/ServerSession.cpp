@@ -166,8 +166,9 @@ void Session::handle_receive( const asio::error_code& error, size_t bytes_transf
 			}
 
 			PACKET_HEADER* pHeader = (PACKET_HEADER*)&m_PacketBuffer[nReadData];
-			
-			if( pHeader->nSize >= nPacketData )
+
+			//경고: 책에 부등호가 반대로 써져있으니 주의
+			if( pHeader->nSize <= nPacketData )
 			{
 				m_pServer->ProcessPacket( m_nSessionID, &m_PacketBuffer[nReadData] );
 				
