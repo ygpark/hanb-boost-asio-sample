@@ -268,7 +268,7 @@ void ChatClient::handle_receive( const asio::error_code& error, size_t bytes_tra
 		//처리하고 남은 자투리 데이터 처리
 		if( nPacketData > 0 )
 		{
-			char TempBuffer[MAX_RECEIVE_BUFFER_LEN] = {0,};
+			char TempBuffer[MAX_RECEIVE_BUFFER_LEN*2] = {0,};
 			memcpy( &TempBuffer[ 0 ], &m_PacketBuffer[nReadData], nPacketData );
 			memcpy( &m_PacketBuffer[ 0 ], &TempBuffer[0], nPacketData );
 		}
